@@ -1,11 +1,15 @@
 ## YOLO Air : Makes improvements easy again
 
 #### News
+手把手改进YOLO系列: 全面改进篇更新🔗：
+[点击查看详情🚀 - 更多更全更新颖·《原创》·《最新》· 手把手改进YOLO系列详细教程(包括改进原理以及改进源代码 · 改进有效涨点)📚](https://github.com/iscyy/yoloair/wiki/Improved-tutorial-presentation)
+
 更新 [🔗 YOLOAir2](https://github.com/iscyy/yoloair2) 目标检测代码库 ☁️💡🎈
 - **Based on the YOLOv7 framework, Pure for improving YOLOv7**
 
 - [YOLOAir2 ](https://github.com/iscyy/yoloair2) is the second version of the YOLOAir series, The framework is based on YOLOv7, including YOLOv7, YOLOv6, YOLOv5, YOLOX, YOLOR, YOLOv4, YOLOv3, Transformer, Attention and Improved-YOLOv7... 
 - As a supplement and perfection of YOLOAir
+-----
 
 <div align="center">
   <p>
