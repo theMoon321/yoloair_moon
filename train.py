@@ -474,26 +474,43 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             if f.exists():
                 strip_optimizer(f)  # strip optimizers
                 if f is best:
-                    print(f)
-                    print("f is best...\n")
                     LOGGER.info(f'\nValidating {f}...')
-                    results, _, _ = val.run(data_dict,
-                                            batch_size=batch_size // WORLD_SIZE * 2,
-                                            imgsz=imgsz,
-                                            model=attempt_load(f, device).half(),
-                                            iou_thres=0.65 if is_coco else 0.60,  # best pycocotools results at 0.65
-                                            single_cls=single_cls,
-                                            dataloader=val_loader,
-                                            save_dir=save_dir,
-                                            save_json=is_coco,
-                                            verbose=True,
-                                            plots=True,
-                                            callbacks=callbacks,
-                                            otaloss=opt.otaloss,
-                                            compute_loss=compute_loss)  # val best model with plots
+                    results, _, _ = val.run(
+                        data_dict,
+                        batch_size=batch_size // WORLD_SIZE * 2,
+                        imgsz=imgsz,
+                        model=attempt_load(f, device).half(),
+                        iou_thres=0.65 if is_coco else 0.60,  # best pycocotools at iou 0.65
+                        single_cls=single_cls,
+                        dataloader=val_loader,
+                        save_dir=save_dir,
+                        save_json=is_coco,
+                        verbose=True,
+                        plots=plots,
+                        callbacks=callbacks,
+                        compute_loss=compute_loss)  # val best model with plots
                     if is_coco:
                         callbacks.run('on_fit_epoch_end', list(mloss) + list(results) + lr, epoch, best_fitness, fi)
-                    print("f is best and val.run() is finished...\n")
+                # if f is best:
+                #     # f: runs/train/exp/weights/best.pt
+                #     LOGGER.info(f'\nValidating {f}...')
+                #     results, _, _ = val.run(data_dict,
+                #                             batch_size=batch_size // WORLD_SIZE * 2,
+                #                             imgsz=imgsz,
+                #                             model=attempt_load(f, device).half(),
+                #                             iou_thres=0.65 if is_coco else 0.60,  # best pycocotools results at 0.65
+                #                             single_cls=single_cls,
+                #                             dataloader=val_loader,
+                #                             save_dir=save_dir,
+                #                             save_json=is_coco,
+                #                             verbose=True,
+                #                             plots=True,
+                #                             callbacks=callbacks,
+                #                             otaloss=opt.otaloss,
+                #                             compute_loss=compute_loss)  # val best model with plots
+                #     if is_coco:
+                #         callbacks.run('on_fit_epoch_end', list(mloss) + list(results) + lr, epoch, best_fitness, fi)
+                    print("(mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t: \n")
                     print(results)
 
         callbacks.run('on_train_end', last, best, plots, epoch, results)
