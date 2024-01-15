@@ -330,7 +330,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
         mloss = torch.zeros(3, device=device)  # mean losses
         LOGGER.info(('\n' + '%11s' * 7) % ('Epoch', 'GPU_mem', 'box_loss', 'obj_loss', 'cls_loss', 'Instances', 'Size'))
-        print("-------Epoch     GPU_mem     box_loss     obj_loss     cls_loss     Instances     Size-------")
+        print("-------Epoch   GPU_mem   box_loss   obj_loss   cls_loss   Instances   Size-------")
         # LOGGER.info(('\n' + '%10s' * 7) % ('Epoch', 'gpu_mem', 'box', 'obj', 'cls', 'labels', 'img_size'))
         
         if RANK != -1:
@@ -432,8 +432,8 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             log_vals = list(mloss) + list(results) + lr
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 
-            print("-------epoch_val: P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)-------")
-            print(results)
+            # print("-------epoch_val: P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)-------")
+            # print(results)
 
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
 
