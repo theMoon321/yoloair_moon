@@ -499,9 +499,9 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
     print("----------------------------YSY----------------------------")
     # val.run(data_dict, imgsz=640, batch_size=1, weights=best)
     val.run(data_dict,
-            batch_size=batch_size // WORLD_SIZE * 2,
+            batch_size=1,
             imgsz=imgsz,
-            model=attempt_load(f, device).half()) # val best model with plots
+            model=attempt_load(best, device).half()) # val best model with plots
     torch.cuda.empty_cache()
     return results
 
