@@ -330,6 +330,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
         mloss = torch.zeros(3, device=device)  # mean losses
         LOGGER.info(('\n' + '%11s' * 7) % ('Epoch', 'GPU_mem', 'box_loss', 'obj_loss', 'cls_loss', 'Instances', 'Size'))
+        print("-------Epoch     GPU_mem     box_loss     obj_loss     cls_loss     Instances     Size-------")
         # LOGGER.info(('\n' + '%10s' * 7) % ('Epoch', 'gpu_mem', 'box', 'obj', 'cls', 'labels', 'img_size'))
         
         if RANK != -1:
@@ -431,6 +432,9 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             log_vals = list(mloss) + list(results) + lr
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 
+            print("-------epoch_val: P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)-------")
+            print(results)
+
             stop = stopper(epoch=epoch, fitness=fi)  # early stop check
 
             # Save model
@@ -485,6 +489,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 strip_optimizer(f)  # strip optimizers
                 if f is best:
                     LOGGER.info(f'\nValidating {f}...')
+                    print("validating...")
                     results, _, _ = val.run(
                         data_dict,
                         batch_size=batch_size // WORLD_SIZE * 2,
@@ -501,6 +506,8 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                         compute_loss=compute_loss)  # val best model with plots
                     if is_coco:
                         callbacks.run('on_fit_epoch_end', list(mloss) + list(results) + lr, epoch, best_fitness, fi)
+                    print("-------final_val: P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)-------")
+                    print(results)
                 # if f is best:
                 #     # f: runs/train/exp/weights/best.pt
                 #     LOGGER.info(f'\nValidating {f}...')
@@ -520,8 +527,6 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 #                             compute_loss=compute_loss)  # val best model with plots
                 #     if is_coco:
                 #         callbacks.run('on_fit_epoch_end', list(mloss) + list(results) + lr, epoch, best_fitness, fi)
-                    print("P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)")
-                    print(results)
 
         callbacks.run('on_train_end', last, best, plots, epoch, results)
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}")
