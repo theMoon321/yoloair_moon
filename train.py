@@ -495,6 +495,9 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         callbacks.run('on_train_end', last, best, plots, epoch, results)
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}")
 
+    # YSY
+    print("----------------------------YSY----------------------------")
+    val.run(data_dict, imgsz=640, batch_size=1, weights=best)
     torch.cuda.empty_cache()
     return results
 
