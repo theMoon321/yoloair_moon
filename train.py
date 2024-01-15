@@ -472,9 +472,9 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         LOGGER.info(f'\n{epoch - start_epoch + 1} epochs completed in {(time.time() - t0) / 3600:.3f} hours.')
         for f in last, best:
             if f.exists():
-                print("f exists...\n")
                 strip_optimizer(f)  # strip optimizers
                 if f is best:
+                    print(f)
                     print("f is best...\n")
                     LOGGER.info(f'\nValidating {f}...')
                     results, _, _ = val.run(data_dict,
@@ -494,17 +494,11 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                     if is_coco:
                         callbacks.run('on_fit_epoch_end', list(mloss) + list(results) + lr, epoch, best_fitness, fi)
                     print("f is best and val.run() is finished...\n")
+                    print(results)
 
         callbacks.run('on_train_end', last, best, plots, epoch, results)
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}")
 
-    # YSY
-    # print("----------------------------YSY----------------------------")
-    # val.run(data_dict, imgsz=640, batch_size=1, weights=best)
-    # val.run(data_dict,
-    #         batch_size=1,
-    #         imgsz=imgsz,
-    #         model=attempt_load(best, device).half()) # val best model with plots
     torch.cuda.empty_cache()
     return results
 
