@@ -417,17 +417,29 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             ema.update_attr(model, include=['yaml', 'nc', 'hyp', 'names', 'stride', 'class_weights'])
             final_epoch = (epoch + 1 == epochs) or stopper.possible_stop
             if not noval or final_epoch:  # Calculate mAP
-                results, maps, _ = val.run(data_dict,
-                                           batch_size=batch_size // WORLD_SIZE * 2,
-                                           imgsz=imgsz,
-                                           model=ema.ema,
-                                           single_cls=single_cls,
-                                           dataloader=val_loader,
-                                           save_dir=save_dir,
-                                           plots=False,
-                                           callbacks=callbacks,
-                                           otaloss=opt.otaloss,
-                                           compute_loss=compute_loss)
+                results, maps, _ = validate.run(data_dict,
+                                                batch_size=batch_size // WORLD_SIZE * 2,
+                                                imgsz=imgsz,
+                                                half=amp,
+                                                model=ema.ema,
+                                                single_cls=single_cls,
+                                                dataloader=val_loader,
+                                                save_dir=save_dir,
+                                                plots=False,
+                                                callbacks=callbacks,
+                                                compute_loss=compute_loss)
+            # if not noval or final_epoch:  # Calculate mAP
+            #     results, maps, _ = val.run(data_dict,
+            #                                batch_size=batch_size // WORLD_SIZE * 2,
+            #                                imgsz=imgsz,
+            #                                model=ema.ema,
+            #                                single_cls=single_cls,
+            #                                dataloader=val_loader,
+            #                                save_dir=save_dir,
+            #                                plots=False,
+            #                                callbacks=callbacks,
+            #                                otaloss=opt.otaloss,
+            #                                compute_loss=compute_loss)
 
             # Update best mAP
             fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
@@ -436,16 +448,29 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
             log_vals = list(mloss) + list(results) + lr
             callbacks.run('on_fit_epoch_end', log_vals, epoch, best_fitness, fi)
 
+            stop = stopper(epoch=epoch, fitness=fi)  # early stop check
+
             # Save model
             if (not nosave) or (final_epoch and not evolve):  # if save
-                ckpt = {'epoch': epoch,
-                        'best_fitness': best_fitness,
-                        'model': deepcopy(de_parallel(model)).half(),
-                        'ema': deepcopy(ema.ema).half(),
-                        'updates': ema.updates,
-                        'optimizer': optimizer.state_dict(),
-                        'wandb_id': loggers.wandb.wandb_run.id if loggers.wandb else None,
-                        'date': datetime.now().isoformat()}
+                ckpt = {
+                    'epoch': epoch,
+                    'best_fitness': best_fitness,
+                    'model': deepcopy(de_parallel(model)).half(),
+                    'ema': deepcopy(ema.ema).half(),
+                    'updates': ema.updates,
+                    'optimizer': optimizer.state_dict(),
+                    'opt': vars(opt),
+                    'git': GIT_INFO,  # {remote, branch, commit} if a git repo
+                    'date': datetime.now().isoformat()}
+            # if (not nosave) or (final_epoch and not evolve):  # if save
+            #     ckpt = {'epoch': epoch,
+            #             'best_fitness': best_fitness,
+            #             'model': deepcopy(de_parallel(model)).half(),
+            #             'ema': deepcopy(ema.ema).half(),
+            #             'updates': ema.updates,
+            #             'optimizer': optimizer.state_dict(),
+            #             'wandb_id': loggers.wandb.wandb_run.id if loggers.wandb else None,
+            #             'date': datetime.now().isoformat()}
 
                 # Save last, best and delete
                 torch.save(ckpt, last)
@@ -456,9 +481,18 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 del ckpt
                 callbacks.run('on_model_save', last, epoch, final_epoch, best_fitness, fi)
 
+        # EarlyStopping
+        if RANK != -1:  # if DDP training
+            broadcast_list = [stop if RANK == 0 else None]
+            dist.broadcast_object_list(broadcast_list, 0)  # broadcast 'stop' to all ranks
+            if RANK != 0:
+                stop = broadcast_list[0]
+        if stop:
+            break  # must break all DDP ranks
+
             # Stop Single-GPU
-            if RANK == -1 and stopper(epoch=epoch, fitness=fi):
-                break
+            # if RANK == -1 and stopper(epoch=epoch, fitness=fi):
+            #     break
 
             # Stop DDP TODO: known issues shttps://github.com/ultralytics/yolov5/pull/4576
             # stop = stopper(epoch=epoch, fitness=fi)
