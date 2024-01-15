@@ -308,6 +308,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         detect = model.model[-1]
 
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
+        callbacks.run('on_train_epoch_start')
         model.train()
 
         if model_type == 'yolox':
@@ -317,12 +318,13 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 LOGGER.info("--->Add additional L1 loss now!")
                 detect.use_l1 = True
             mloss = torch.zeros(3, device=device)  # mean losses
-            LOGGER.info(('\n' + '%10s' * 7) % ('Epoch', 'gpu_mem', 'box', 'obj', 'cls', 'labels', 'img_size'))
+            # LOGGER.info(('\n' + '%10s' * 7) % ('Epoch', 'gpu_mem', 'box', 'obj', 'cls', 'labels', 'img_size'))
         # elif opt.auxotaloss:
         #     mloss = torch.zeros(4, device=device)  # mean losses
         else:
             mloss = torch.zeros(3, device=device)  # mean losses
-            LOGGER.info(('\n' + '%10s' * 7) % ('Epoch', 'gpu_mem', 'box', 'obj', 'cls', 'labels', 'img_size'))
+            # LOGGER.info(('\n' + '%10s' * 7) % ('Epoch', 'gpu_mem', 'box', 'obj', 'cls', 'labels', 'img_size'))
+        
         # Update image weights (optional, single-GPU only)
         if opt.image_weights:
             cw = model.class_weights.cpu().numpy() * (1 - maps) ** 2 / nc  # class weights
@@ -333,15 +335,16 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
         # b = int(random.uniform(0.25 * imgsz, 0.75 * imgsz + gs) // gs * gs)
         # dataset.mosaic_border = [b - imgsz, -b]  # height, width borders
 
-        # mloss = torch.zeros(3, device=device)  # mean losses 原始
+        mloss = torch.zeros(3, device=device)  # mean losses 原始
         if RANK != -1:
             train_loader.sampler.set_epoch(epoch)
         pbar = enumerate(train_loader)
-        # LOGGER.info(('\n' + '%10s' * 7) % ('Epoch', 'gpu_mem', 'box', 'obj', 'cls', 'labels', 'img_size'))
+        LOGGER.info(('\n' + '%10s' * 7) % ('Epoch', 'gpu_mem', 'box', 'obj', 'cls', 'labels', 'img_size'))
         
         if RANK in [-1, 0]:
             pbar = tqdm(pbar, total=nb, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')  # progress bar
         optimizer.zero_grad()
+        
         for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
@@ -510,7 +513,7 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                 #                             compute_loss=compute_loss)  # val best model with plots
                 #     if is_coco:
                 #         callbacks.run('on_fit_epoch_end', list(mloss) + list(results) + lr, epoch, best_fitness, fi)
-                    print("(mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t: \n")
+                    print("P, R, mAP@.5, mAP@.5-.95, val_loss(box, obj, cls)")
                     print(results)
 
         callbacks.run('on_train_end', last, best, plots, epoch, results)
