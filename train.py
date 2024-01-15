@@ -435,25 +435,14 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
 
             # Save model
             if (not nosave) or (final_epoch and not evolve):  # if save
-                ckpt = {
-                    'epoch': epoch,
-                    'best_fitness': best_fitness,
-                    'model': deepcopy(de_parallel(model)).half(),
-                    'ema': deepcopy(ema.ema).half(),
-                    'updates': ema.updates,
-                    'optimizer': optimizer.state_dict(),
-                    'opt': vars(opt),
-                    'git': GIT_INFO,  # {remote, branch, commit} if a git repo
-                    'date': datetime.now().isoformat()}
-            # if (not nosave) or (final_epoch and not evolve):  # if save
-            #     ckpt = {'epoch': epoch,
-            #             'best_fitness': best_fitness,
-            #             'model': deepcopy(de_parallel(model)).half(),
-            #             'ema': deepcopy(ema.ema).half(),
-            #             'updates': ema.updates,
-            #             'optimizer': optimizer.state_dict(),
-            #             'wandb_id': loggers.wandb.wandb_run.id if loggers.wandb else None,
-            #             'date': datetime.now().isoformat()}
+                ckpt = {'epoch': epoch,
+                        'best_fitness': best_fitness,
+                        'model': deepcopy(de_parallel(model)).half(),
+                        'ema': deepcopy(ema.ema).half(),
+                        'updates': ema.updates,
+                        'optimizer': optimizer.state_dict(),
+                        'wandb_id': loggers.wandb.wandb_run.id if loggers.wandb else None,
+                        'date': datetime.now().isoformat()}
 
                 # Save last, best and delete
                 torch.save(ckpt, last)
